@@ -137,55 +137,51 @@
         const errorMessage = document.getElementById('errorMessage');
         const successMessage = document.getElementById('successMessage');
         const unlockedOverlay = document.getElementById('unlockedOverlay');
-    
-        const BACKEND_URL = "https://nmlsafeback-production.up.railway.app/check-password";
-    
-        lockIcon.addEventListener('click', async () => {
+        
+        lockIcon.addEventListener('click', () => {
           const enteredPassword = passwordInput.value;
-    
-          try {
-            const res = await fetch(BACKEND_URL, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({ password: enteredPassword })
-            });
-    
-            if (res.ok) {
+        
+          fetch('https://nmlsafeback-production.up.railway.app/check-password', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ password: enteredPassword })
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
               errorMessage.classList.add('hidden');
-              successMessage.classList.remove('hidden');
               lockIcon.classList.add('hidden');
               unlockedOverlay.classList.remove('opacity-0');
               unlockedOverlay.classList.add('opacity-100');
-              unlockedOverlay.innerHTML = '<i class="fas fa-lock-open text-6xl md:text-8xl text-green-500 animate-pulse"></i>';
+              successMessage.classList.remove('hidden');
+              document.getElementById('contentSections').classList.remove('hidden');
+              document.getElementById('loginSection').classList.add('hidden');
             } else {
-              throw new Error("Wrong password");
+              errorMessage.classList.remove('hidden');
+              successMessage.classList.add('hidden');
+              passwordInput.value = '';
+              lockIcon.classList.add('animate-shake');
+              setTimeout(() => {
+                lockIcon.classList.remove('animate-shake');
+              }, 500);
             }
-          } catch (e) {
-            errorMessage.classList.remove('hidden');
-            successMessage.classList.add('hidden');
-            passwordInput.value = '';
-    
-            lockIcon.classList.add('animate-shake');
-            setTimeout(() => lockIcon.classList.remove('animate-shake'), 500);
-          }
+          });
         });
-    
         passwordInput.addEventListener('keypress', (e) => {
-          if (e.key === 'Enter') {
-            lockIcon.click();
-          }
+            if (e.key === 'Enter') {
+                lockIcon.click();
+            }
         });
-    
         const style = document.createElement('style');
         style.innerHTML = `
-          @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-            20%, 40%, 60%, 80% { transform: translateX(5px); }
-          }
-          .animate-shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+                20%, 40%, 60%, 80% { transform: translateX(5px); }
+            }
+            .animate-shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
         `;
         document.head.appendChild(style);
 
