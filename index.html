@@ -85,6 +85,13 @@
             text-shadow: 0 0 5px #f00;
             color: #f00;
         }
+
+        #contentDisplay {
+            max-height: 500px;
+            overflow-y: auto;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
     </style>
 </head>
 <body class="bg-black min-h-screen flex flex-col items-center justify-center p-4 scanlines">
@@ -127,64 +134,89 @@
         </div>
     </div>
 
-    <script>
-        const passwordInput = document.getElementById('passwordInput');
-        const lockIcon = document.getElementById('lockIcon');
-        const errorMessage = document.getElementById('errorMessage');
-        const successMessage = document.getElementById('successMessage');
-        const unlockedOverlay = document.getElementById('unlockedOverlay');
-        
-        lockIcon.addEventListener('click', () => {
-          const enteredPassword = passwordInput.value;
-        
-          fetch('https://nmlsafeback-production.up.railway.app/check-password', {
+<script>
+    const passwordInput = document.getElementById('passwordInput');
+    const lockIcon = document.getElementById('lockIcon');
+    const errorMessage = document.getElementById('errorMessage');
+    const successMessage = document.getElementById('successMessage');
+    const unlockedOverlay = document.getElementById('unlockedOverlay');
+
+    lockIcon.addEventListener('click', () => {
+        const enteredPassword = passwordInput.value;
+
+        fetch('https://nmlsafeback-production.up.railway.app/check-password', {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json'
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({ password: enteredPassword })
-          })
-          .then(res => res.json())
-          .then(data => {
+        })
+        .then(res => res.json())
+        .then(data => {
             if (data.success) {
-              errorMessage.classList.add('hidden');
-              lockIcon.classList.add('hidden');
-              unlockedOverlay.classList.remove('opacity-0');
-              unlockedOverlay.classList.add('opacity-100');
-              successMessage.classList.remove('hidden');
-              document.getElementById('contentSections').classList.remove('hidden');
-              document.getElementById('loginSection').classList.add('hidden');
+                errorMessage.classList.add('hidden');
+                lockIcon.classList.add('hidden');
+                unlockedOverlay.classList.remove('opacity-0');
+                unlockedOverlay.classList.add('opacity-100');
+                successMessage.classList.remove('hidden');
+                document.getElementById('contentSections').classList.remove('hidden');
+                document.getElementById('loginSection').classList.add('hidden');
             } else {
-              errorMessage.classList.remove('hidden');
-              successMessage.classList.add('hidden');
-              passwordInput.value = '';
-              lockIcon.classList.add('animate-shake');
-              setTimeout(() => {
-                lockIcon.classList.remove('animate-shake');
-              }, 500);
-            }
-          });
-        });
-        passwordInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                lockIcon.click();
+                errorMessage.classList.remove('hidden');
+                successMessage.classList.add('hidden');
+                passwordInput.value = '';
+                lockIcon.classList.add('animate-shake');
+                setTimeout(() => {
+                    lockIcon.classList.remove('animate-shake');
+                }, 500);
             }
         });
-        const style = document.createElement('style');
-        style.innerHTML = `
-            @keyframes shake {
-                0%, 100% { transform: translateX(0); }
-                10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-                20%, 40%, 60%, 80% { transform: translateX(5px); }
-            }
-            .animate-shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
-        `;
-        document.head.appendChild(style);
+    });
 
-        function showContent(type) {
-            const contentDisplay = document.getElementById('contentDisplay');
-            contentDisplay.classList.remove('hidden');
+    passwordInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            lockIcon.click();
         }
-    </script>
+    });
+
+    const style = document.createElement('style');
+    style.innerHTML = `
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        .animate-shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+    `;
+    document.head.appendChild(style);
+
+    function showContent(type) {
+        const contentDisplay = document.getElementById('contentDisplay');
+        const typingContainer = document.getElementById('typingContainer');
+
+        typingContainer.innerHTML = '';
+        contentDisplay.classList.remove('hidden');
+
+        fetch('https://nmlsafeback-production.up.railway.app/get-letter')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.letter) {
+                    typeText(data.letter, typingContainer);
+                } else {
+                    typingContainer.innerText = "Лист не знайдено.";
+                }
+            })
+            .catch(err => {
+                typingContainer.innerText = "Помилка підключення до сервера.";
+            });
+    }
+
+    function typeText(text, container, i = 0) {
+        if (i < text.length) {
+            container.innerHTML += text[i] === '\n' ? '<br>' : text[i];
+            setTimeout(() => typeText(text, container, i + 1), 30);
+        }
+    }
+</script>
 </body>
 </html>
